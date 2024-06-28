@@ -1,9 +1,7 @@
 class Game < ApplicationRecord
-  after_create :generate_token
-
-  private
+  before_create :generate_token
 
   def generate_token
-    update(token: TokenService.generate_token(id))
+    self.token = TokenService.generate_token
   end
 end
