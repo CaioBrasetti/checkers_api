@@ -1,8 +1,8 @@
 class TokenService
   SECRET_KEY = Rails.application.credentials.secret_key_base
 
-  def self.generate_token(game_id)
-    payload = { game_id: game_id }
+  def self.generate_token
+    payload = SecureRandom.hex(10)
     JWT.encode(payload, SECRET_KEY, 'HS256')
   end
 
