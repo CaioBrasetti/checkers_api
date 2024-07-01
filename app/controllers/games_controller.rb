@@ -1,5 +1,5 @@
 class GamesController < ApplicationController
-  before_action :find_game, only: %i[join_game change_position check_game_status check_board_pieces]
+  before_action :find_game, only: %i[join_game change_position check_game_status check_board_pieces check_position]
   before_action :check_token, only: %i[change_position check_game_status check_board_pieces]
 
   def create
@@ -19,10 +19,10 @@ class GamesController < ApplicationController
   end
 
   def join_game
-    token_player = request.headers['token']
-    token_game = @game.player2_token
+    header_token = request.headers['token']
+    player_token = @game.player2_token
 
-    if validate_token(token_player, token_game)
+    if validate_token(header_token, player_token)
       @game.update(status: 'player_1 turn')
 
       render json:
@@ -32,6 +32,25 @@ class GamesController < ApplicationController
     else
       render json: { error: 'Token inválido' }, status: :bad_request
     end
+  end
+
+  def check_position
+    header_token = request.headers['token']
+
+    case header_token
+    when @game.player1_token
+      moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'W')
+
+    when @game.player2_token
+      moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'B')
+    else
+      render json: { error: 'Token inválido "check_position' }, status: :bad_request
+    end
+    moves.present? ? moves : moves = 'Nenhum movimento válido para essa peça'
+    render json:
+      {
+        allowed_moves: moves
+      }, status: :ok
   end
 
   def change_position
@@ -83,7 +102,7 @@ class GamesController < ApplicationController
   end
 
   def validate_token(header_token, player_token)
-    TokenService.validade_token(header_token, player_token)
+    TokenService.validate_token(header_token, player_token)
   end
 
   def find_game
