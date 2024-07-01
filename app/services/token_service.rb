@@ -3,7 +3,7 @@ class TokenService
     SecureRandom.hex(32)
   end
 
-  def self.validate_token(token_player, token_game)
-    token_player == token_game
+  def self.validate_token(header_token, player_token)
+    header_token == player_token
   end
 end
