@@ -13,4 +13,5 @@ Rails.application.routes.draw do
   post '/change_position', to: 'games#change_position'
   get '/check_game_status', to: 'games#check_game_status'
   get '/check_board_pieces', to: 'games#check_board_pieces'
+  get '/check_position', to: 'games#check_position'
 end
