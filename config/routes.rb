@@ -10,4 +10,7 @@ Rails.application.routes.draw do
   resources :games, only: [:create]
 
   post '/join_game', to: 'games#join_game'
+  post '/change_position', to: 'games#change_position'
+  get '/check_game_status', to: 'games#check_game_status'
+  get '/check_board_pieces', to: 'games#check_board_pieces'
 end
