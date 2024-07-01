@@ -29,11 +29,8 @@ module BoardHelper
         valid_movement("Movimento realizado de #{old_position} para #{new_position}")
       else
 
-        if player_color == 'W'
-          response = RulesHelper.valid_move?(@board, -1, new_row, new_col, old_row, old_col)
-        else
-          response = RulesHelper.valid_move?(@board, 1, new_row, new_col, old_row, old_col)
-        end
+        up_down = player_color == 'W' ? -1 : 1
+        response = RulesHelper.valid_move?(@board, up_down, new_row, new_col, old_row, old_col)
 
         return invalid_movement unless response
 
