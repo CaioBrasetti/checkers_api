@@ -1,6 +1,6 @@
 class GamesController < ApplicationController
   before_action :find_game, only: %i[join_game change_position check_game_status check_board_pieces check_position]
-  before_action :check_token, only: %i[change_position check_game_status check_board_pieces]
+  before_action :check_token, only: %i[change_position check_game_status check_board_pieces check_position]
 
   def create
     @game = Game.new
@@ -62,7 +62,7 @@ class GamesController < ApplicationController
     when @game.player2_token
       handle_player_turn('B', 'player_2 turn', 'player_1 turn')
     else
-      render json: { error: 'Token inválido' }, status: :bad_request
+      render_error('Token inválido', :bad_request)
     end
   end
 
@@ -79,7 +79,7 @@ class GamesController < ApplicationController
   private
 
   def handle_player_turn(color, current_status, next_status)
-    return unless @game.status == current_status
+    return render_error('Por favor aguarde seu turno', :unauthorized) unless @game.status == current_status
 
     response = BoardHelper.move(@game, params['old_position'], params['new_position'], color)
 
@@ -87,7 +87,7 @@ class GamesController < ApplicationController
       @game.update(board: response[:board].to_json, status: next_status)
       render json: { message: response[:message] }, status: response[:status]
     else
-      render json: { error: response[:error] }, status: response[:status]
+      render_error(response[:error], response[:status])
     end
   end
 
@@ -99,6 +99,10 @@ class GamesController < ApplicationController
     unless header_token == game.player1_token || header_token == game.player2_token
       render json: { error: 'Token inválido' }, status: :bad_request
     end
+  end
+
+  def render_error(message, status)
+    render json: { error: message }, status: status
   end
 
   def validate_token(header_token, player_token)
