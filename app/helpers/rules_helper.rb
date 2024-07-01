@@ -1,8 +1,7 @@
 module RulesHelper
   class << self
     def valid_move?(board, up_down, new_row, new_col, old_row, old_col)
-      return unless new_col.positive?
-      return unless new_row.positive?
+      return unless new_col >= 0 || new_row >= 0 # Verificar positivo
 
       row_diff = new_row - old_row
       col_diff = (new_col - old_col).abs
@@ -23,6 +22,8 @@ module RulesHelper
       board = JSON.parse(board)
 
       old_row, old_col = old_position.split(',').map(&:to_i)
+      return if [0, 1].include?(board[old_row][old_col])
+
       moves = []
 
       up_down = color == 'W' ? -1 : 1
