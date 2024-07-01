@@ -1,7 +1,7 @@
 module RulesHelper
   class << self
     def valid_move?(board, up_down, new_row, new_col, old_row, old_col)
-      return unless new_col >= 0 || new_row >= 0 # Verificar positivo
+      return unless new_col >= 0 && new_row >= 0
 
       row_diff = new_row - old_row
       col_diff = (new_col - old_col).abs
