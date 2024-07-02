@@ -20,7 +20,7 @@ module BoardHelper
 
       piece = @board[old_row][old_col]
 
-      return invalid_movement unless piece == player_color
+      return invalid_movement unless piece.slice(0) == player_color
 
       if piece.include?('K')
         return invalid_movement unless RulesHelper.valid_king_move?(@board, old_row, old_col, new_row, new_col)
@@ -28,7 +28,6 @@ module BoardHelper
         update_board(old_row, old_col, new_row, new_col, piece)
         valid_movement("Movimento realizado de #{old_position} para #{new_position}")
       else
-
         up_down = player_color == 'W' ? -1 : 1
         response = RulesHelper.valid_move?(@board, up_down, new_row, new_col, old_row, old_col)
 

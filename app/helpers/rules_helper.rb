@@ -24,6 +24,8 @@ module RulesHelper
       old_row, old_col = old_position.split(',').map(&:to_i)
       return if [0, 1].include?(board[old_row][old_col])
 
+      return king_allowed_positions(board, old_row, old_col, color) if board[old_row][old_col].include?('K')
+
       moves = []
 
       up_down = color == 'W' ? -1 : 1
@@ -37,15 +39,27 @@ module RulesHelper
         moves << [new_row, new_col] if valid_move?(board, up_down, new_row, new_col, old_row, old_col)
       end
 
-     moves
+      moves
     end
 
-    def king_allowed_positions(board, old_position, color)
-      old_row, old_col = old_position.split(',').map(&:to_i)
+    def king_allowed_positions(board, old_row, old_col, color)
       moves = []
+      directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]]
 
-      return unless color.include?('K')
-       # add logica da dama aqui
+      directions.each do |row_dir, col_dir|
+        new_row = old_row + row_dir
+        new_col = old_col + col_dir
+
+        while new_row.between?(0, 7) && new_col.between?(0, 7)
+          break unless board[new_row][new_col] == 1
+
+          moves << [new_row, new_col]
+          new_row += row_dir
+          new_col += col_dir
+        end
+      end
+
+      moves
     end
 
     private

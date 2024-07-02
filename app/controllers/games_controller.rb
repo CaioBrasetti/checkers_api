@@ -47,6 +47,7 @@ class GamesController < ApplicationController
       render json: { error: 'Token inválido "check_position' }, status: :bad_request
     end
     moves.present? ? moves : moves = 'Nenhum movimento válido para essa peça'
+
     render json:
       {
         allowed_moves: moves
