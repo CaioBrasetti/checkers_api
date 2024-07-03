@@ -30,7 +30,7 @@ module BoardHelper
       return invalid_movement unless piece == player_color || piece == "#{player_color}K"
 
       if piece.include?('K')
-        allowed_positions = RulesHelper.captured_piece_dama(@board, player_color)
+        allowed_positions = RulesHelper.captured_piece_king(@board, player_color)
 
         unless allowed_positions.nil?
           if allowed_positions.size.positive?
