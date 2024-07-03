@@ -52,7 +52,7 @@ module RulesHelper
       color == 'B' ? ['W', 'WK'] : ['B', 'BK']
     end
 
-    def captured_piece_dama(board, color)
+    def captured_piece_king(board, color)
       captured_positions = []
 
       board_size = board.size - 1 # Ajuste para o tamanho correto do tabuleiro
@@ -116,13 +116,19 @@ module RulesHelper
 
     def allowed_positions(board, old_position, color)
       board = JSON.parse(board)
+      moves = []
+      can_capture = color.include?('K') ? captured_piece_king(board, color) : captured_piece(board, color)
+
+      if can_capture
+        moves << can_capture
+
+        return moves
+      end
 
       old_row, old_col = old_position.split(',').map(&:to_i)
       return if [0, 1].include?(board[old_row][old_col])
 
       return king_allowed_positions(board, old_row, old_col, color) if board[old_row][old_col].include?('K')
-
-      moves = []
 
       up_down = color == 'W' ? -1 : 1
 
