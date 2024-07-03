@@ -18,20 +18,45 @@ module BoardHelper
       allowed_position = RulesHelper.captured_piece(@board, player_color)
 
       unless allowed_position.nil?
-        return invalid_movement unless allowed_position[:new_position] == new_position
+        if allowed_position[:new_position] != new_position
+          return invalid_movement("É obrigatório capturar usando a peça: #{allowed_position[:piece_position]}")
+        end
       end
 
       old_row, old_col = old_position.split(',').map(&:to_i) # ["2", "3"] { |s| s.to_i }
       new_row, new_col = new_position.split(',').map(&:to_i)
       piece = @board[old_row][old_col]
 
-      return invalid_movement unless piece == player_color
+      return invalid_movement unless piece == player_color || piece == "#{player_color}K"
 
       if piece.include?('K')
-        # return invalid_movement unless RulesHelper.valid_king_move?(@board, old_row, old_col, new_row, new_col)
+        allowed_positions = RulesHelper.captured_piece_dama(@board, player_color)
 
-        # update_board(old_row, old_col, new_row, new_col, piece)
-        # valid_movement("Movimento realizado de #{old_position} para #{new_position}")
+        unless allowed_positions.nil?
+          if allowed_positions.size.positive?
+            valid_move = false
+            captured = nil
+
+            allowed_positions.each do |position|
+              if position[:new_position] == new_position
+                valid_move = true
+                captured = position[:captured_position]
+                break
+              end
+            end
+
+            unless valid_move
+              return invalid_movement("É obrigatório capturar usando a peça #{allowed_positions.first[:piece_position]}")
+            end
+          end
+        end
+
+        return invalid_movement unless RulesHelper.valid_king_move?(@board, old_row, old_col, new_row, new_col)
+
+        captured_position = allowed_positions.present? ? captured : nil
+
+        update_board(old_row, old_col, new_row, new_col, piece, captured_position)
+        valid_movement("Movimento realizado de #{old_position} para #{new_position}")
       else
         up_down = player_color == 'W' ? -1 : 1
         row = nil
@@ -49,8 +74,12 @@ module BoardHelper
 
         return invalid_movement unless response
 
-        promote_to_king(new_row, new_col, player_color)
-        update_board(old_row, old_col, new_row, new_col, piece, allowed_position)
+        new_king = promote_to_king(new_row, new_col, player_color)
+        piece = new_king.present? ? new_king : piece
+
+        captured_position = allowed_position.present? ? allowed_position[:captured_position] : nil
+
+        update_board(old_row, old_col, new_row, new_col, piece, captured_position)
         valid_movement("Movimento realizado de #{old_position} para #{new_position}")
       end
     end
@@ -61,16 +90,20 @@ module BoardHelper
       { message: message, status: :ok, board: @board }
     end
 
-    def invalid_movement
-      { error: 'Movimento inválido: movimento não permitido pelas regras', status: :unprocessable_entity }
+    def invalid_movement(message = nil)
+      message = message.present? ? message : 'Movimento inválido: movimento não permitido pelas regras'
+
+      { error: message, status: :unprocessable_entity }
     end
 
-    def update_board(old_row, old_col, new_row, new_col, piece, allowed_position)
+    def update_board(old_row, old_col, new_row, new_col, piece, captured_position)
       @board[old_row][old_col] = 1
       @board[new_row][new_col] = piece
 
-      captured_row, captured_col = allowed_position[:captured_position].split(',').map(&:to_i) if allowed_position.present?
-      @board[captured_row][captured_col] = 1 if allowed_position.present?
+      if captured_position.present?
+        captured_row, captured_col = captured_position.split(',').map(&:to_i)
+        @board[captured_row][captured_col] = 1
+      end
 
       @board
     end

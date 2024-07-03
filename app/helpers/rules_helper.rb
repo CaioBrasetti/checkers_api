@@ -3,44 +3,114 @@ module RulesHelper
     def captured_piece(board, color)
       captured_positions = []
 
-      directions = [
-        { row_offset: 1, col_offset: 1, capture_row_offset: 2, capture_col_offset: 2 },
-        { row_offset: 1, col_offset: -1, capture_row_offset: 2, capture_col_offset: -2 },
-        { row_offset: -1, col_offset: 1, capture_row_offset: -2, capture_col_offset: 2 },
-        { row_offset: -1, col_offset: -1, capture_row_offset: -2, capture_col_offset: -2 }
-      ]
+      directions = if color == 'W'
+                     [
+                       { row_offset: -1, col_offset: 1, capture_row_offset: -2, capture_col_offset: 2 },
+                       { row_offset: -1, col_offset: -1, capture_row_offset: -2, capture_col_offset: -2 }
+                     ]
+                   else
+                     [
+                       { row_offset: 1, col_offset: 1, capture_row_offset: 2, capture_col_offset: 2 },
+                       { row_offset: 1, col_offset: -1, capture_row_offset: 2, capture_col_offset: -2 },
+                       { row_offset: -1, col_offset: 1, capture_row_offset: -2, capture_col_offset: 2 },
+                       { row_offset: -1, col_offset: -1, capture_row_offset: -2, capture_col_offset: -2 }
+                     ]
+                   end
 
       board_size = board.size
 
       board.each_with_index do |row, old_row|
         row.each_with_index do |cell, old_col|
-          next unless cell == color
-
-          opponent_color = color == 'B' ? 'W' : 'B'
+          next unless cell == color || cell == "#{color}K" # Incluindo checagem para peças rei
 
           directions.each do |dir|
-            next unless valid_position?(old_row + dir[:row_offset], old_col + dir[:col_offset], board_size) &&
-                        valid_position?(old_row + dir[:capture_row_offset], old_col + dir[:capture_col_offset], board_size)
+            capture_row = old_row + dir[:capture_row_offset]
+            capture_col = old_col + dir[:capture_col_offset]
+            enemy_row = old_row + dir[:row_offset]
+            enemy_col = old_col + dir[:col_offset]
 
-            if board[old_row + dir[:row_offset]][old_col + dir[:col_offset]] == opponent_color &&
-               board[old_row + dir[:capture_row_offset]][old_col + dir[:capture_col_offset]] == 1
+            next unless valid_position?(enemy_row, enemy_col, board_size) &&
+                        valid_position?(capture_row, capture_col, board_size)
 
-              captured_row = (old_row + (old_row + dir[:capture_row_offset])) / 2
-              captured_col = (old_col + (old_col + dir[:capture_col_offset])) / 2
+            if opponent_colors(color).include?(board[enemy_row][enemy_col]) &&
+               board[capture_row][capture_col] == 1
 
               captured_positions << {
                 piece_position: "#{old_row},#{old_col}",
-                new_position: "#{old_row + dir[:capture_row_offset]},#{old_col + dir[:capture_col_offset]}",
-                captured_position: "#{captured_row},#{captured_col}"
+                new_position: "#{capture_row},#{capture_col}",
+                captured_position: "#{enemy_row},#{enemy_col}"
               }
             end
           end
         end
       end
+
       captured_positions.empty? ? nil : captured_positions.first
     end
 
+    def opponent_colors(color)
+      color == 'B' ? ['W', 'WK'] : ['B', 'BK']
+    end
+
+    def captured_piece_dama(board, color)
+      captured_positions = []
+
+      board_size = board.size - 1 # Ajuste para o tamanho correto do tabuleiro
+
+      directions = [
+        { row_offset: 1, col_offset: 1 },
+        { row_offset: 1, col_offset: -1 },
+        { row_offset: -1, col_offset: 1 },
+        { row_offset: -1, col_offset: -1 }
+      ]
+
+      board.each_with_index do |row, old_row|
+        row.each_with_index do |cell, old_col|
+          next unless cell == "#{color}K" # Verifica se a peça é uma dama
+          puts "Checking piece at #{old_row},#{old_col}" # Mensagem de depuração
+
+          opponent_color = opponent_colors(color)
+
+          directions.each do |dir|
+            distance = 1
+
+            loop do
+              new_row = old_row + dir[:row_offset] * distance
+              new_col = old_col + dir[:col_offset] * distance
+              capture_row = old_row + dir[:row_offset] * (distance + 1)
+              capture_col = old_col + dir[:col_offset] * (distance + 1)
+
+              puts "Checking new position at #{new_row},#{new_col} and capture position at #{capture_row},#{capture_col}" # Mensagem de depuração
+
+              break unless valid_king_position?(new_row, new_col, board_size) &&
+              valid_king_position?(capture_row, capture_col, board_size)
+
+              if opponent_colors(color).include?(board[new_row][new_col])
+                next unless board[capture_row][capture_col] == 1
+
+                captured_positions << {
+                  piece_position: "#{old_row},#{old_col}",
+                  new_position: "#{capture_row},#{capture_col}",
+                  captured_position: "#{new_row},#{new_col}"
+                }
+
+                break captured_positions
+              end
+
+              distance += 1
+            end
+          end
+        end
+      end
+
+      captured_positions.empty? ? nil : captured_positions
+    end
+
     def valid_position?(row, col, board_size)
+      row >= 0 && col >= 0 && row < board_size && col < board_size
+    end
+
+    def valid_king_position?(row, col, board_size)
       row.between?(0, board_size - 1) && col.between?(0, board_size - 1)
     end
 
