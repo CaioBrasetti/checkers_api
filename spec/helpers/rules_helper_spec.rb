@@ -22,7 +22,7 @@ RSpec.describe RulesHelper do
       it 'returns the correct captured piece information for a king' do
         color = 'BK'
 
-        result = RulesHelper.captured_piece_king(board, color)
+        result = KingRulesHelper.captured_piece_king(board, color)
 
         expect(result).to be_an(Array).or be_nil
       end

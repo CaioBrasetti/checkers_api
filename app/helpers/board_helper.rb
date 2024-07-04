@@ -44,7 +44,7 @@ module BoardHelper
     private
 
     def king_move(board, player_color, new_position, old_row, old_col, new_row, new_col)
-      allowed_positions = RulesHelper.captured_piece_king(board, player_color)
+      allowed_positions = KingRulesHelper.captured_piece_king(board, player_color)
 
       unless allowed_positions.nil?
         if allowed_positions.size.positive?
@@ -65,7 +65,7 @@ module BoardHelper
         end
       end
 
-      return invalid_movement unless RulesHelper.valid_king_move?(board, old_row, old_col, new_row, new_col)
+      return invalid_movement unless KingRulesHelper.valid_king_move?(board, old_row, old_col, new_row, new_col)
 
       allowed_positions.present? ? captured : nil
     end
