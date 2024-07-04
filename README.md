@@ -60,7 +60,7 @@ rails server
 Após seguir os passos de instalação, abra o aplicativo do postman para desktop.
 Para maior facilidade, vou deixar aqui um link com a colection contendo os endpoints.
 
-Baixe aqui a [colection](LINK_AQUI).
+Baixe aqui a [colection](https://drive.google.com/drive/folders/1cVDm6cilKqJkSyWtK1QBsJBlhQjARBWL?usp=sharing).
 
 1. Após a instalação do postman importe a colection disponibilizada acima;
 2. Entre na requisição `Create New Game`
