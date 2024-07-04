@@ -1,6 +1,5 @@
 class GamesController < ApplicationController
   before_action :find_game, only: %i[join_game change_position check_game_status check_board_pieces check_position]
-  before_action :check_token, only: %i[change_position check_game_status check_board_pieces check_position]
 
   def create
     @game = Game.new
@@ -20,9 +19,8 @@ class GamesController < ApplicationController
 
   def join_game
     header_token = request.headers['token']
-    player_token = @game.player2_token
 
-    if validate_token(header_token, player_token)
+    if token_valid?(header_token, @game)
       @game.update(status: 'player_1 turn')
 
       render json:
@@ -37,44 +35,60 @@ class GamesController < ApplicationController
   def check_position
     header_token = request.headers['token']
 
-    case header_token
-    when @game.player1_token
-      moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'W')
+    if token_valid?(header_token, @game)
+      case header_token
+      when @game.player1_token
+        moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'W')
 
-    when @game.player2_token
-      moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'B')
+      when @game.player2_token
+        moves = RulesHelper.allowed_positions(@game.board, params['old_position'], 'B')
+      else
+        render json: { error: 'Token inválido "check_position' }, status: :bad_request
+      end
+      moves.present? ? moves : moves = 'Nenhum movimento válido para essa peça'
+
+      render json:
+        {
+          allowed_moves: moves
+        }, status: :ok
     else
-      render json: { error: 'Token inválido "check_position' }, status: :bad_request
+      render json: { error: 'Token inválido' }, status: :bad_request
     end
-    moves.present? ? moves : moves = 'Nenhum movimento válido para essa peça'
-
-    render json:
-      {
-        allowed_moves: moves
-      }, status: :ok
   end
 
   def change_position
     header_token = request.headers['token']
 
-    case header_token
-    when @game.player1_token
-      handle_player_turn('W', 'player_1 turn', 'player_2 turn')
-    when @game.player2_token
-      handle_player_turn('B', 'player_2 turn', 'player_1 turn')
+    if token_valid?(header_token, @game)
+      case header_token
+      when @game.player1_token
+        handle_player_turn('W', 'player_1 turn', 'player_2 turn')
+      when @game.player2_token
+        handle_player_turn('B', 'player_2 turn', 'player_1 turn')
+      else
+        render_error('Um erro ocorreu. Tente novamente', :internal_server_error)
+      end
     else
-      render_error('Token inválido', :bad_request)
+      render json: { error: 'Token inválido' }, status: :bad_request
     end
   end
 
   def check_game_status
-    render json: { message: "Status atual da partida: #{@game.status}" }, status: response[:status]
+    if token_valid?(header_token, @game)
+      render json: { message: "Status atual da partida: #{@game.status}" }, status: response[:status]
+    else
+      render json: { error: 'Token inválido' }, status: :bad_request
+    end
   end
 
   def check_board_pieces
-    board = JSON.parse(@game.board)
+    if token_valid?(header_token, @game)
+      board = JSON.parse(@game.board)
 
-    render json: { message: "Board: #{board}" }, status: :ok
+      render json: { message: "Board: #{board}" }, status: :ok
+    else
+      render json: { error: 'Token inválido' }, status: :bad_request
+    end
   end
 
   private
@@ -92,22 +106,12 @@ class GamesController < ApplicationController
     end
   end
 
-  def check_token
-    header_token = request.headers['token']
-
-    game = Game.find(params[:id])
-
-    unless header_token == game.player1_token || header_token == game.player2_token
-      render json: { error: 'Token inválido' }, status: :bad_request
-    end
-  end
-
   def render_error(message, status)
     render json: { error: message }, status: status
   end
 
-  def validate_token(header_token, player_token)
-    TokenService.validate_token(header_token, player_token)
+  def token_valid?(header_token, game)
+    TokenService.validate_token?(header_token, game)
   end
 
   def find_game
