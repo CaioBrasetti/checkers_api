@@ -74,6 +74,8 @@ class GamesController < ApplicationController
   end
 
   def check_game_status
+    header_token = request.headers['token']
+
     if token_valid?(header_token, @game)
       render json: { message: "Status atual da partida: #{@game.status}" }, status: response[:status]
     else
@@ -82,6 +84,8 @@ class GamesController < ApplicationController
   end
 
   def check_board_pieces
+    header_token = request.headers['token']
+
     if token_valid?(header_token, @game)
       board = JSON.parse(@game.board)
 
